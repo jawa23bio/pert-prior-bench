@@ -22,6 +22,67 @@ has more parameters, the shuffled prior will help just as much.
 Every linear model also reports uncertainty (bootstrap ensemble), and the
 benchmark checks whether that uncertainty means anything.
 
+## Results on Norman et al. 2019
+
+**Short answer: no.** On the Norman et al. 2019 CRISPRa Perturb-seq screen (K562;
+105 single and 131 double perturbations, 2,085 genes), adding the CollecTRI network
+did not improve prediction of unseen perturbations, even for the perturbed genes it
+covers. A network with shuffled gene labels did as well.
+
+CollecTRI covers 43 of the 105 perturbed genes (41%). Unseen singles, `pearson_top20`:
+
+| model | all 105 | 43 in prior | 62 not in prior |
+|---|---|---|---|
+| mean baseline | 0.51 | 0.57 | 0.49 |
+| **linear[expression]** | **0.52** | **0.60** | 0.48 |
+| linear[prior] | 0.51 | 0.55 | 0.49 |
+| linear[both] | 0.51 | 0.55 | 0.49 |
+| linear[both, shuffled prior] | 0.52 | 0.59 | 0.49 |
+
+For the 43 covered TFs, the real network beat the shuffled one for only 16, and
+`linear[both]` was slightly but consistently worse than `linear[expression]`
+(paired Wilcoxon p < 0.01). For doubles, the additive baseline won by a wide margin
+(0.97 vs 0.73 for the best linear model), as in the synthetic control.
+
+### The result holds across settings
+
+Same table for the 43 covered TFs (full outputs in [`robustness/`](robustness/README.md)):
+
+| check | linear[expression] | linear[both] (real) | linear[both, shuffled] |
+|---|---|---|---|
+| original (`--k-prior 50`) | 0.60 | 0.55 | 0.59 |
+| `--k-prior 20` | 0.60 | 0.57 | 0.59 |
+| `--k-prior 100` | 0.60 | 0.56 | 0.59 |
+| unsigned network (all edges +1) | 0.60 | 0.54 | 0.60 |
+| + measured targets of perturbed TFs (2,873 genes) | 0.53 | 0.50 | 0.49 |
+
+The last row tests the most likely objection. In the original gene set, a covered TF
+had a median of only 4 of its CollecTRI targets among the measured genes, so the
+network had little to work with. `scripts/prep_add_targets.py` adds every target of a
+perturbed TF detected in at least 1% of cells (788 genes), raising the median to 11.
+The network still did not help.
+
+A sixth check removed the response shared by all perturbations (about a third of the
+variance). After that, no model, including the expression baseline, predicted the
+remaining perturbation-specific effects, so that check cannot separate the models.
+
+### What it means
+
+Either curated networks carry less causal information about these perturbations
+than is usually assumed, or a linear model cannot use it. Some caveats point to next
+steps:
+
+- **Cell type.** CollecTRI is not specific to K562, and many of its links may not be
+  active there. Context-specific networks are the obvious next test.
+- **Coverage.** Only 43 perturbed genes are TFs in the network, and 18 of them have
+  5 or more measured targets in the original gene set. A screen that perturbs more
+  TFs, such as a genome-scale Perturb-seq screen, would give the network more chances.
+- **Signal.** Known targets are enriched among each TF's most-changed genes (about
+  2.2-fold), but their direction agrees with the network's sign only 43% of the time.
+  The links point to the right genes more often than they predict how those genes move.
+- **Uncertainty.** As on synthetic data, the bootstrap intervals are overconfident
+  (`coverage80` about 0.1 instead of 0.8).
+
 ## What gets measured
 
 For each held-out perturbation (perturbed genes excluded from scoring):
@@ -77,6 +138,12 @@ python scripts/run_benchmark.py --h5ad data/norman.h5ad \
     --prior collectri --out results_norman
 python scripts/plot_results.py --results results_norman
 ```
+
+**Low memory?** The full Norman file is about 700 MB. `scripts/prep_large_h5ad.py`
+reads it in column chunks and writes one mean log-normalized row per perturbation
+(run it twice: the first pass picks genes, the second writes the file). Then run the
+benchmark on that file with `--already-log --min-cells 1`. The results above were
+produced this way, with CollecTRI saved as `data/collectri.csv`.
 
 `--prior collectri` downloads the CollecTRI TF network through `decoupler`.
 You can also pass any CSV with `source,target,weight` columns.
