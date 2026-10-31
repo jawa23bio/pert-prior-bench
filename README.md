@@ -150,36 +150,6 @@ You can also pass any CSV with `source,target,weight` columns.
 
 Outputs in `--out`: `summary.md` (tables), per-perturbation CSVs, and one figure per experiment.
 
-## Four-week plan
-
-**Week 1: baselines on real data.** Set up, run the synthetic control, download
-Norman, run with `--prior none`. Expected: `linear[expression]` is close to the
-mean baseline for singles and `additive` is strong for doubles, matching the
-published benchmarks. Reproducing a known result first is what makes everything
-after it trustworthy.
-
-**Week 2: add the prior.** Run with CollecTRI. Record prior coverage (what
-fraction of perturbed genes are TFs in the network). Read the in-prior /
-not-in-prior split: that split is where any real effect should show up.
-
-**Week 3: robustness.** Three seeds; `--k-prior` 20/50/100; `--k` 5/10/20.
-Check that conclusions hold across settings, not just one. Stretch: replace the
-bootstrap intervals with split-conformal intervals and compare `coverage80`.
-
-**Week 4: write it up.** One-page summary in this README: the question, the
-table, the figure, what you'd do next. Push to GitHub.
-
-## Reading the result honestly
-
-Any outcome is a usable result:
-
-- **Prior helps, shuffled doesn't, and the gain is concentrated in covered genes:**
-  evidence that curated regulation carries information the expression data lacks.
-- **Prior doesn't help:** also informative. The next question is why: low
-  coverage, wrong network for K562, or effects dominated by a shared stress response.
-- **Prior helps and shuffled helps too:** the gain is capacity, not biology. Say so.
-
-The thing to avoid is reporting only the configuration that looks best.
 
 ## Layout
 
