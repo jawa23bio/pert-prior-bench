@@ -18,9 +18,8 @@ Real > shuffled for only 13 to 18 of 43 TFs. Real vs expression-only was slightl
 The "targets" data: `scripts/prep_add_targets.py` adds every CollecTRI target of a perturbed TF that is detected in >= 1% of cells
 (788 genes added; median measured targets per covered TF went from 4 to 11).
 
-Commands (same flags for every run, run from the repo root):
-
-    python scripts/run_benchmark.py --h5ad data/norman_pb.h5ad --already-log --min-cells 1 --n-hvg 2085 --prior data/collectri.csv [--k-prior 20|100] --out results_X
-    python scripts/run_benchmark.py --h5ad data/norman_pb_targets.h5ad --already-log --min-cells 1 --n-hvg 2873 --prior data/collectri.csv --out results_targets
+Commands: see "Data and reproducing every result" in the main README. The inputs
+for `unsigned` and `noshared` come from `scripts/make_variants.py`; the `targets`
+data from `scripts/prep_add_targets.py`.
 
 Note for noshared: the shared response was the mean effect over all single perturbations (including held-out ones), so it is a diagnostic only.

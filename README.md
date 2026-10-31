@@ -110,14 +110,14 @@ Unseen singles, `pearson_top20` (run `bash run_synthetic.sh` to reproduce):
 |---|---|---|---|
 | mean baseline | 0.33 | 0.26 | 0.53 |
 | linear[expression] | 0.33 | 0.27 | 0.53 |
-| **linear[prior]** | **0.55** | **0.56** | 0.53 |
-| linear[both] | 0.53 | 0.54 | 0.52 |
+| **linear[prior]** | **0.55** | **0.55** | 0.53 |
+| linear[both] | 0.54 | 0.55 | 0.51 |
 | linear[both, shuffled prior] | 0.33 | 0.27 | 0.53 |
 
 It behaves as expected. Two things it also shows, worth carrying into the real analysis:
 
-- For doubles, the plain **additive baseline wins** (0.97). Combinations are hard to beat when effects are close to additive.
-- The bootstrap intervals are **overconfident**: `coverage80` is 0.2 to 0.5 instead of 0.8. Ensembles of the same model underestimate uncertainty. Fixing that (for example with conformal calibration) is a natural extension.
+- For doubles, the plain **additive baseline wins** (0.96). Combinations are hard to beat when effects are close to additive.
+- The bootstrap intervals are **overconfident**: `coverage80` is 0.1 to 0.5 instead of 0.8. Ensembles of the same model underestimate uncertainty. Fixing that (for example with conformal calibration) is a natural extension.
 
 ## Running it on real data
 
@@ -151,12 +151,54 @@ You can also pass any CSV with `source,target,weight` columns.
 Outputs in `--out`: `summary.md` (tables), per-perturbation CSVs, and one figure per experiment.
 
 
+## Data and reproducing every result
+
+The data files are not in the repo (the screen alone is about 700 MB). To rebuild them:
+
+| file | source | how |
+|---|---|---|
+| `data/norman.h5ad` | Norman et al. 2019, from scPerturb ([Zenodo record 10044268](https://zenodo.org/records/10044268), v1.4, `NormanWeissman2019_filtered.h5ad`) | download and rename |
+| `data/collectri.tsv` | CollecTRI from OmniPath: `https://omnipathdb.org/interactions?datasets=collectri&genesymbols=yes` | download (included) |
+| `data/collectri.csv` | the TSV above | `python scripts/make_collectri_csv.py` (included) |
+| `data/norman_pb.h5ad` | the screen, one mean row per perturbation, 2,085 genes | `python scripts/prep_large_h5ad.py --h5ad data/norman.h5ad --out data/norman_pb.h5ad --n-hvg 2000`, run twice |
+| `data/norman_pb_targets.h5ad` | same, plus measured CollecTRI targets of the perturbed TFs | `python scripts/prep_add_targets.py` |
+| `data/collectri_unsigned.csv`, `data/norman_pb_noshared.h5ad` | inputs for two robustness checks | `python scripts/make_variants.py` |
+
+Then every result folder comes from one command:
+
+```bash
+B="python scripts/run_benchmark.py --already-log --min-cells 1"
+$B --h5ad data/norman_pb.h5ad --n-hvg 2085 --prior none                 --out results_none
+$B --h5ad data/norman_pb.h5ad --n-hvg 2085 --prior data/collectri.csv   --out results_norman
+$B --h5ad data/norman_pb.h5ad --n-hvg 2085 --prior data/collectri.csv --k-prior 20  --out robustness/k20
+$B --h5ad data/norman_pb.h5ad --n-hvg 2085 --prior data/collectri.csv --k-prior 100 --out robustness/k100
+$B --h5ad data/norman_pb.h5ad --n-hvg 2085 --prior data/collectri_unsigned.csv      --out robustness/unsigned
+$B --h5ad data/norman_pb_targets.h5ad  --n-hvg 2873 --prior data/collectri.csv      --out robustness/targets
+$B --h5ad data/norman_pb_noshared.h5ad --n-hvg 2085 --prior data/collectri.csv      --out robustness/noshared
+python scripts/plot_results.py --results results_norman
+```
+
+`robustness/base` is the same run as `results_norman`. Each run takes about two
+minutes on a laptop. `bash run_synthetic.sh` reproduces `results_synthetic`
+exactly (fixed seed).
+
 ## Layout
 
 ```
-src/pertbench/data.py       pseudobulk effects, singles/doubles, folds
-src/pertbench/priors.py     CollecTRI loader, network propagation
-src/pertbench/models.py     baselines and the linear model (+ bootstrap, nested ridge)
-src/pertbench/evaluate.py   metrics and calibration
-scripts/                    synthetic data, inspection, benchmark, plots
+src/pertbench/data.py         pseudobulk effects, singles/doubles, folds
+src/pertbench/priors.py       CollecTRI loader, network propagation
+src/pertbench/models.py       baselines and the linear model (+ bootstrap, nested ridge)
+src/pertbench/evaluate.py     metrics and calibration
+scripts/run_benchmark.py      the benchmark
+scripts/plot_results.py       figures
+scripts/make_synthetic.py     synthetic positive control
+scripts/inspect_data.py       look inside an .h5ad to set the flags
+scripts/prep_large_h5ad.py    low-memory pseudobulk of a large screen
+scripts/prep_add_targets.py   pseudobulk with the prior's targets added
+scripts/make_collectri_csv.py OmniPath download -> source,target,weight CSV
+scripts/make_variants.py      unsigned prior and shared-response-removed data
+results_synthetic/            positive control
+results_none/                 Norman, no prior (baselines only)
+results_norman/               Norman with CollecTRI (main result)
+robustness/                   five robustness checks plus a diagnostic, with a summary
 ```

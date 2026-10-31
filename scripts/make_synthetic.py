@@ -56,7 +56,7 @@ def main(out_dir: str, seed: int = 0):
         pairs.add((a, b))
     conditions = {"control": np.zeros(n_genes)}
     conditions.update({g: effect([g]) for g in singles})
-    conditions.update({f"{a}+{b}": effect([a, b]) for a, b in pairs})
+    conditions.update({f"{a}+{b}": effect([a, b]) for a, b in sorted(pairs)})
 
     X, labels = [], []
     for name, d in conditions.items():
