@@ -1,0 +1,7 @@
+data/*.h5ad
+data/*.npz
+data/*.log
+*.pyc
+__pycache__/
+results_kprior20/
+results_kprior20.log
