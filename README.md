@@ -77,9 +77,13 @@ steps:
 - **Coverage.** Only 43 perturbed genes are TFs in the network, and 18 of them have
   5 or more measured targets in the original gene set. A screen that perturbs more
   TFs, such as a genome-scale Perturb-seq screen, would give the network more chances.
-- **Signal.** Known targets are enriched among each TF's most-changed genes (about
-  2.2-fold), but their direction agrees with the network's sign only 43% of the time.
-  The links point to the right genes more often than they predict how those genes move.
+- **Signal.** Known targets are enriched among each TF's 100 most-changed genes
+  (57 vs about 26 expected, 2.2-fold), but over half of these hits come from three TFs
+  (JUN, FOSB, SPI1). Targets move in the direction of the edge sign 43% of the time,
+  against 38% for random genes given the same signs: most genes go down after a
+  perturbation while most edges say "activates", so raw agreement is low for any gene
+  set. The network carries a modest signal that a linear model does not turn into
+  better predictions. `python scripts/diagnose_targets.py` reproduces these numbers.
 - **Uncertainty.** As on synthetic data, the bootstrap intervals are overconfident
   (`coverage80` about 0.1 instead of 0.8).
 
@@ -197,6 +201,7 @@ scripts/prep_large_h5ad.py    low-memory pseudobulk of a large screen
 scripts/prep_add_targets.py   pseudobulk with the prior's targets added
 scripts/make_collectri_csv.py OmniPath download -> source,target,weight CSV
 scripts/make_variants.py      unsigned prior and shared-response-removed data
+scripts/diagnose_targets.py   are network targets enriched and correctly signed?
 results_synthetic/            positive control
 results_none/                 Norman, no prior (baselines only)
 results_norman/               Norman with CollecTRI (main result)
