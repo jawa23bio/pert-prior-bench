@@ -22,6 +22,23 @@ has more parameters, the shuffled prior will help just as much.
 Every linear model also reports uncertainty (bootstrap ensemble), and the
 benchmark checks whether that uncertainty means anything.
 
+> **Known limits and a v2 protocol.** The results below come from the original
+> protocol. [`docs/V2.md`](docs/V2.md) lists what limits them (the metric rewards
+> the response shared by all perturbations, the shuffled control leaves most
+> perturbed TFs with no targets, and the bootstrap intervals are not prediction
+> intervals) and how `scripts/run_v2.py` addresses each.
+>
+> Under v2 (`results_v2/`), scoring only what is specific to each perturbation,
+> on the 34 perturbed TFs with a measured target: the expression-only model
+> scores 0.21 (95% CI 0.06 to 0.36; the mean baseline is 0 by definition), adding
+> the network gives -0.03, and a one-parameter model that reads the network
+> directly cannot be told apart from a permuted network (p = 0.55, 99 draws). A
+> planted network effect one tenth the size of a perturbation's own specific
+> effect would have been detected (`results_spike_in/`). Noise is not the limit:
+> two halves of each perturbation's cells agree at 0.97 on the same score
+> (`results_noise_ceiling/`). Intervals built from out-of-fold residuals cover
+> 80%, at the same width for every model.
+
 ## Results on Norman et al. 2019
 
 **Short answer: no.** On the Norman et al. 2019 CRISPRa Perturb-seq screen (K562;
@@ -202,6 +219,14 @@ scripts/prep_add_targets.py   pseudobulk with the prior's targets added
 scripts/make_collectri_csv.py OmniPath download -> source,target,weight CSV
 scripts/make_variants.py      unsigned prior and shared-response-removed data
 scripts/diagnose_targets.py   are network targets enriched and correctly signed?
+src/pertbench/protocol.py     v2: repeated stratified CV, null networks, summaries
+src/pertbench/calibrate.py    v2: prediction intervals from out-of-fold residuals
+scripts/run_v2.py             v2 benchmark (centered metric, two nulls, direct[prior])
+scripts/spike_in.py           v2: how large an effect could the benchmark detect?
+scripts/noise_ceiling.py      v2: split-half reliability (best achievable score)
+scripts/make_norman_like.py   data-free stand-in with CollecTRI's real sparsity
+tests/                        pytest: controls, metric, models, intervals, v1 reproduction
+docs/V2.md                    what changed in v2 and why
 results_synthetic/            positive control
 results_none/                 Norman, no prior (baselines only)
 results_norman/               Norman with CollecTRI (main result)
