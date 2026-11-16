@@ -1,0 +1,9 @@
+# Versions the v2 code and tests were run with. requirements.txt keeps the loose lower bounds.
+# Python 3.13:
+numpy==2.5.3
+pandas==3.0.5
+scipy==1.18.1
+anndata==0.13.4
+matplotlib==3.11.2
+tabulate==0.10.0
+# Also passes with: numpy 2.5.4 / pandas 3.1.1, and numpy 2.1.3 / pandas 2.2.3 / scipy 1.14.1 / anndata 0.11.1

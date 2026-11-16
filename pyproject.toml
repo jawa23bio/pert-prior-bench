@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pertbench"
+version = "0.2.0"
+description = "Does a regulatory-network prior help predict unseen genetic perturbations?"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24", "pandas>=2.0", "scipy>=1.10", "anndata>=0.10", "matplotlib>=3.7", "tabulate>=0.9"]
+
+[project.optional-dependencies]
+collectri = ["decoupler>=1.6"]   # only needed for --prior collectri (download); a CSV needs nothing extra
+test = ["pytest>=7"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore"]

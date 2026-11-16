@@ -1,0 +1,20 @@
+name: tests
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -e ".[test]"
+      - run: pytest -q
+      # the whole v2 pipeline, end to end, on the data-free stand-in
+      - run: |
+          python scripts/make_norman_like.py --out data/norman_like_pb.h5ad
+          python scripts/run_v2.py --h5ad data/norman_like_pb.h5ad --already-log --min-cells 1 --sep _ \
+            --n-hvg 2085 --prior data/collectri.csv --repeats 1 --n-null 3 --calibrate --out /tmp/v2
