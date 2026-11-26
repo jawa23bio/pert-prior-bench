@@ -9,6 +9,7 @@ Writes to --out:
   singles_per_perturbation.csv one row per perturbation x model x network x draw x repeat (large)
   singles_mean.csv             the same, averaged over repeats and null draws (small; commit this one)
   null_tests.csv               real network vs each null distribution
+  null_draws.csv               mean score of every null draw (covered perturbations)
   diagnostics.csv              per covered TF: measured targets, retained, transferable
   calibration.csv              per perturbation interval coverage / width (with --calibrate)
   doubles_per_perturbation.csv unseen doubles
@@ -181,6 +182,10 @@ def main():
         tests = pd.concat([P.null_test(df, m, model, cov) for model in sorted(set(df[df.network == "real"].model))
                            for m in ["pearson_ctr_top20", "pearson_top20"]], ignore_index=True)
         tests.to_csv(out / "null_tests.csv", index=False)
+        # one row per null draw (mean over covered perturbations and repeats), for figures
+        d = df[df["perturbation"].isin(cov.index[cov.values])]
+        (d.groupby(["model", "network", "draw"])[["pearson_ctr_top20", "pearson_top20"]].mean()
+           .reset_index().to_csv(out / "null_draws.csv", index=False))
         lines += ["## Is the real network better than a wrong one? (covered perturbations)\n",
                   "Statistic: mean score over covered perturbations. `p` = share of null draws scoring at least "
                   "as high as the real network (one-sided; the smallest possible value is 1/(1+draws)).\n",
